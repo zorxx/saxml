@@ -57,3 +57,35 @@ contentHandler: 'more content goes here
 '
 tagEndHandler: 'begin'
 ```
+
+## Example #3 (test3.xml)
+
+XML Document: 
+```
+<begin  > 
+   <second_begin yes no="hello">
+      <nothing_much attribute_in_small_tag />
+      <another_begin>
+      </another_begin>
+   </second_begin>
+   more content goes here
+</begin>
+```
+
+Callbacks executed:
+```
+tagHandler: 'begin'
+tagHandler: 'second_begin'
+attributeHandler: 'yes'
+attributeHandler: 'no="hello"'
+tagHandler: 'nothing_much'
+attributeHandler: 'attribute_in_small_tag'
+tagEndHandler: ' '
+tagHandler: 'another_begin'
+tagEndHandler: 'another_begin'
+tagEndHandler: 'second_begin'
+contentHandler: 'more content goes here
+'
+tagEndHandler: 'begin'
+```
+Note that, in this example, the tagEndHandler is called with a single-character string parameter for the empty tag (nothing_much) that contains an attribute. This is an ideosyncrasy of the SAX parser, since the empty tag's name isn't stored by the parser, in order to save heap usage.

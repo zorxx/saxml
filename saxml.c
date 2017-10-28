@@ -303,6 +303,13 @@ static void state_Attribute(void *context, const uint8_t character)
                 nextState = state_Attribute;
             break;
         case '/':
+            /* We've found an empty tag that contains at least one attribute.
+               Since the buffer containing the tag name is long-gone (the attribute
+               is now in the parser's string buffer), we don't have a way to get it
+               back. In order to generate a "tagEnd" event, store a dummy string
+               containing a single space character (which isn't a valid tag name),
+               which will be provided to the tagEndHandler callback. */
+            ContextBufferAddChar(ctxt, ' ');
             nextState = state_EmptyTag;
             break;
         case '>':
@@ -315,7 +322,10 @@ static void state_Attribute(void *context, const uint8_t character)
 
     if(NULL != nextState)
     {
-        CallHandler(ctxt, attributeHandler);
+        if(nextState != state_EmptyTag)
+        {
+            CallHandler(ctxt, attributeHandler);
+        }
         ChangeState(ctxt, nextState);
     }
 }

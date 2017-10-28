@@ -1,0 +1,8 @@
+<begin  > 
+   <second_begin yes no="hello">
+      <nothing_much attribute_in_small_tag />
+      <another_begin>
+      </another_begin>
+   </second_begin>
+   more content goes here
+</begin>
