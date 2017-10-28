@@ -2,7 +2,8 @@
  * \license This file is released under the MIT License. See the LICENSE file for details.
  * \brief Embedded XML Parser
  */
-#include <malloc.h>
+#include <malloc.h> /* malloc and free */
+#include <stddef.h> /* for NULL */
 #include "saxml.h"
 
 typedef void (*pfnParserStateHandler)(void *context, const uint8_t character);
