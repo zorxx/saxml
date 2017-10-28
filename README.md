@@ -5,7 +5,7 @@ saxml is a truly small event-driven XML parser designed for use in embedded/micr
 
 saxml performs no validation of the XML document
 
-##Example #1 (test.xml):
+## Example #1 (test.xml):
 
 XML Document: 
 ```
@@ -30,7 +30,7 @@ tagEndHandler: 'begin'
 
 ```
 
-##Example #2 (test2.xml):
+## Example #2 (test2.xml):
 
 XML Document: 
 ```
