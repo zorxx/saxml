@@ -7,7 +7,7 @@
 
 #include <stdint.h>
 
-typedef void (*pfnStringHandler)(void *cookie, const uint8_t *szString);
+typedef void (*pfnStringHandler)(void *cookie, const char *szString);
 
 typedef struct
 {
@@ -21,10 +21,14 @@ typedef struct
 
 typedef void *tSaxmlParser;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*! \brief Create an XML parsing instance
  *  \param context Pointer to structure containing pointers to parsing handling
  *                 functions, which are called when parsing events occur.
- *  \param maxStringSize Maximum number of characters for parsed strings. If the 
+ *  \param maxStringSize Maximum number of characters for parsed strings. If the
  *                       parser encounters a string longer than this, it will be
  *                       truncated to this length when provided via the szString
  *                       parameter of the corresponding pfnStringHandler function.
@@ -42,11 +46,15 @@ void saxml_Deinitialize(tSaxmlParser parser);
  *  \param parser tSaxmlParser instance, obtained from a call to saxml_Initialize
  *  \param character Character to process
  */
-void saxml_HandleCharacter(tSaxmlParser parser, const uint8_t character);
+void saxml_HandleCharacter(tSaxmlParser parser, const char character);
 
-/*! \brief Reset the parser to its initial state 
+/*! \brief Reset the parser to its initial state
  *  \param parser tSaxmlParser instance, obtained from a call to saxml_Initialize
  */
 void saxml_Reset(tSaxmlParser parser);
+
+#ifdef __cplusplus
+};
+#endif
 
 #endif /* SAXML_H */

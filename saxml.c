@@ -6,28 +6,28 @@
 #include <stddef.h> /* for NULL */
 #include "saxml.h"
 
-typedef void (*pfnParserStateHandler)(void *context, const uint8_t character);
+typedef void (*pfnParserStateHandler)(void *context, const char character);
 
 typedef struct
 {
     tSaxmlContext *user;
-    
+
     pfnParserStateHandler pfnHandler;
 
     int bInitialize; /* true for first call into a state */
 
-    uint8_t *buffer;
+    char *buffer;
     uint32_t maxStringSize;
     uint32_t length;
-} tParserContext; 
+} tParserContext;
 
-static void state_Begin(void *context, const uint8_t character);
-static void state_StartTag(void *context, const uint8_t character);
-static void state_TagName(void *context, const uint8_t character);
-static void state_TagContents(void *context, const uint8_t character);
-static void state_EndTag(void *context, const uint8_t character);
-static void state_EmptyTag(void *context, const uint8_t character);
-static void state_Attribute(void *context, const uint8_t character);
+static void state_Begin(void *context, const char character);
+static void state_StartTag(void *context, const char character);
+static void state_TagName(void *context, const char character);
+static void state_TagContents(void *context, const char character);
+static void state_EndTag(void *context, const char character);
+static void state_EmptyTag(void *context, const char character);
+static void state_Attribute(void *context, const char character);
 
 #if !defined(DBG)
     #define DBG(...)
@@ -70,7 +70,7 @@ tSaxmlParser saxml_Initialize(tSaxmlContext *context, const uint32_t maxStringSi
     if(NULL == ctxt)
         return NULL;
 
-    ctxt->buffer = (uint8_t *) malloc(maxStringSize);
+    ctxt->buffer = (char *) malloc(maxStringSize);
     if(NULL == ctxt->buffer)
     {
         free(ctxt);
@@ -78,7 +78,7 @@ tSaxmlParser saxml_Initialize(tSaxmlContext *context, const uint32_t maxStringSi
     }
 
     ctxt->user = context;
-    ctxt->length = 0; 
+    ctxt->length = 0;
     ctxt->maxStringSize = maxStringSize;
     ChangeState(ctxt, state_Begin);
 
@@ -96,7 +96,7 @@ void saxml_Deinitialize(tSaxmlParser parser)
     }
 }
 
-void saxml_HandleCharacter(tSaxmlParser parser, const uint8_t character)
+void saxml_HandleCharacter(tSaxmlParser parser, const char character)
 {
     tParserContext *ctxt = (tParserContext *) parser;
     ctxt->pfnHandler(ctxt, character);
@@ -113,7 +113,7 @@ void saxml_Reset(tSaxmlParser parser)
  */
 
 /* Wait for a tag start character */
-static void state_Begin(void *context, const uint8_t character)
+static void state_Begin(void *context, const char character)
 {
     tParserContext *ctxt = (tParserContext *) context;
     pfnParserStateHandler nextState = NULL;
@@ -144,7 +144,7 @@ static void state_Begin(void *context, const uint8_t character)
 
 /* We've already found a tag start character, determine if this is start or end tag,
  *  and parse the tag name */
-static void state_StartTag(void *context, const uint8_t character)
+static void state_StartTag(void *context, const char character)
 {
     tParserContext *ctxt = (tParserContext *) context;
 
@@ -175,7 +175,7 @@ static void state_StartTag(void *context, const uint8_t character)
     }
 }
 
-static void state_TagName(void *context, const uint8_t character)
+static void state_TagName(void *context, const char character)
 {
     tParserContext *ctxt = (tParserContext *) context;
     pfnParserStateHandler nextState = NULL;
@@ -213,7 +213,7 @@ static void state_TagName(void *context, const uint8_t character)
     }
 }
 
-static void state_EmptyTag(void *context, const uint8_t character)
+static void state_EmptyTag(void *context, const char character)
 {
     tParserContext *ctxt = (tParserContext *) context;
     pfnParserStateHandler nextState = NULL;
@@ -243,7 +243,7 @@ static void state_EmptyTag(void *context, const uint8_t character)
     }
 }
 
-static void state_TagContents(void *context, const uint8_t character)
+static void state_TagContents(void *context, const char character)
 {
     tParserContext *ctxt = (tParserContext *) context;
     pfnParserStateHandler nextState = NULL;
@@ -281,7 +281,7 @@ static void state_TagContents(void *context, const uint8_t character)
     }
 }
 
-static void state_Attribute(void *context, const uint8_t character)
+static void state_Attribute(void *context, const char character)
 {
     tParserContext *ctxt = (tParserContext *) context;
     pfnParserStateHandler nextState = NULL;
@@ -331,7 +331,7 @@ static void state_Attribute(void *context, const uint8_t character)
     }
 }
 
-static void state_EndTag(void *context, const uint8_t character)
+static void state_EndTag(void *context, const char character)
 {
     tParserContext *ctxt = (tParserContext *) context;
     pfnParserStateHandler nextState = NULL;
