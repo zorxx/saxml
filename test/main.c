@@ -9,27 +9,27 @@
 #include <string.h>
 #include "saxml.h"
 
-static void HandleTag(void *cookie, const uint8_t *szString)
+static void HandleTag(void *cookie, const char *szString)
 {
     fprintf(stderr, "tagHandler: '%s'\n", szString);
 }
 
-static void HandleTagEnd(void *cookie, const uint8_t *szString)
+static void HandleTagEnd(void *cookie, const char *szString)
 {
     fprintf(stderr, "tagEndHandler: '%s'\n", szString);
 }
 
-static void HandleParameter(void *cookie, const uint8_t *szString)
+static void HandleParameter(void *cookie, const char *szString)
 {
     fprintf(stderr, "parameterHandler: '%s'\n", szString);
 }
 
-static void HandleContent(void *cookie, const uint8_t *szString)
+static void HandleContent(void *cookie, const char *szString)
 {
     fprintf(stderr, "contentHandler: '%s'\n", szString);
 }
 
-static void HandleAttribute(void *cookie, const uint8_t *szString)
+static void HandleAttribute(void *cookie, const char *szString)
 {
     fprintf(stderr, "attributeHandler: '%s'\n", szString);
 }
