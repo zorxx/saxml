@@ -2,9 +2,15 @@
  * \license This file is released under the MIT License. See the LICENSE file for details.
  * \brief Embedded XML Parser
  */
-#include <stdlib.h> /* malloc and free */
 #include <stddef.h> /* for NULL */
+#ifndef SAXML_NO_MALLOC
+#include <stdlib.h> /* malloc and free */
+#endif
 #include "saxml.h"
+
+#if defined(SAXML_NO_MALLOC) && !defined(SAXML_MAX_STRING_LENGTH)
+#error saxml: Must define SAXML_MAX_STRING_LENGTH
+#endif
 
 typedef void (*pfnParserStateHandler)(void *context, const char character);
 
@@ -20,6 +26,10 @@ typedef struct
     uint32_t maxStringSize;
     uint32_t length;
 } tParserContext;
+#ifdef SAXML_NO_MALLOC
+static tParserContext g_saxmlParserContext;
+static char g_saxmlBuffer[SAXML_MAX_STRING_LENGTH];
+#endif
 
 static void state_Begin(void *context, const char character);
 static void state_StartTag(void *context, const char character);
@@ -66,6 +76,10 @@ tSaxmlParser saxml_Initialize(tSaxmlContext *context, const uint32_t maxStringSi
     if(NULL == context)
         return NULL;
 
+    #ifdef SAXML_NO_MALLOC
+    ctxt = &g_saxmlParserContext;
+    ctxt->buffer = g_saxmlBuffer;
+    #else
     ctxt = (tParserContext *) malloc(sizeof(*context));
     if(NULL == ctxt)
         return NULL;
@@ -76,6 +90,7 @@ tSaxmlParser saxml_Initialize(tSaxmlContext *context, const uint32_t maxStringSi
         free(ctxt);
         return NULL;
     }
+    #endif
 
     ctxt->user = context;
     ctxt->length = 0;
@@ -87,6 +102,7 @@ tSaxmlParser saxml_Initialize(tSaxmlContext *context, const uint32_t maxStringSi
 
 void saxml_Deinitialize(tSaxmlParser parser)
 {
+    #ifndef SAXML_NO_MALLOC
     tParserContext *ctxt = (tParserContext *) parser;
     if(NULL != ctxt)
     {
@@ -94,6 +110,7 @@ void saxml_Deinitialize(tSaxmlParser parser)
             free(ctxt->buffer);
         free(ctxt);
     }
+    #endif
 }
 
 void saxml_HandleCharacter(tSaxmlParser parser, const char character)
