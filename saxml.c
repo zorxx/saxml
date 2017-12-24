@@ -2,7 +2,7 @@
  * \license This file is released under the MIT License. See the LICENSE file for details.
  * \brief Embedded XML Parser
  */
-#include <malloc.h> /* malloc and free */
+#include <stdlib.h> /* malloc and free */
 #include <stddef.h> /* for NULL */
 #include "saxml.h"
 
