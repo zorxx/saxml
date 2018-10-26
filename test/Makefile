@@ -11,7 +11,7 @@ CXX = g++
 LD = ld
 
 CDEFS = DEBUG_PRINT
-CFLAGS = -O3 -Wall -pedantic
+CFLAGS = -O3 -Wall -std=c99 -pedantic
 CFLAGS += $(foreach def,$(CDEFS),-D${def})
 CFLAGS += -I..
 LFLAGS = -lm -lrt -lc -Wl,-Map=$(APP).map
