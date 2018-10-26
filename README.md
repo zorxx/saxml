@@ -1,6 +1,8 @@
 # saxml
 Embedded XML Parser
 
+[![Build Status](https://travis-ci.org/zorxx/saxml.svg?branch=master)](https://travis-ci.org/zorxx/saxml)
+
 saxml is a truly small event-driven XML parser designed for use in embedded/microcontroller applications.
 
 Since saxml is a SAX XML parser (see https://en.wikipedia.org/wiki/Simple_API_for_XML), the parser has a very small memory footprint (there's no XML document stored on the heap). Instead, the XML document is streamed to the parser a single character at a time. As the parser encounters interesting events (such as a start tag, end tag, attribute, etc.), the parser executes callback functions which are registered by the calling application. This allows the calling application to perform application-specific operations based on XML parsing events.
