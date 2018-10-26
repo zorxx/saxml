@@ -1,4 +1,4 @@
-/* \copyright 2017 Zorxx Software. All rights reserved.
+/* \copyright 2017-2018 Zorxx Software. All rights reserved.
  * \license This file is released under the MIT License. See the LICENSE file for details.
  * \brief Embedded XML Parser
  */
@@ -9,29 +9,31 @@
 #include <string.h>
 #include "saxml.h"
 
+#define PRINT printf
+
 static void HandleTag(void *cookie, const char *szString)
 {
-    fprintf(stderr, "tagHandler: '%s'\n", szString);
+    PRINT("tagHandler: '%s'\n", szString);
 }
 
 static void HandleTagEnd(void *cookie, const char *szString)
 {
-    fprintf(stderr, "tagEndHandler: '%s'\n", szString);
+    PRINT("tagEndHandler: '%s'\n", szString);
 }
 
 static void HandleParameter(void *cookie, const char *szString)
 {
-    fprintf(stderr, "parameterHandler: '%s'\n", szString);
+    PRINT("parameterHandler: '%s'\n", szString);
 }
 
 static void HandleContent(void *cookie, const char *szString)
 {
-    fprintf(stderr, "contentHandler: '%s'\n", szString);
+    PRINT( "contentHandler: '%s'\n", szString);
 }
 
 static void HandleAttribute(void *cookie, const char *szString)
 {
-    fprintf(stderr, "attributeHandler: '%s'\n", szString);
+    PRINT("attributeHandler: '%s'\n", szString);
 }
 
 int main(int argc, char *argv[])

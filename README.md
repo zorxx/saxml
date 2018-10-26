@@ -1,16 +1,20 @@
 # saxml
 Embedded XML Parser
 
-saxml is a truly small event-driven XML parser designed for use in embedded/microcontroller applications. Since saxml is a SAX XML parser (see https://en.wikipedia.org/wiki/Simple_API_for_XML), the parser has a very small memory footprint (there's no XML document stored on the heap). Instead, the XML document is streamed to the parser a single character at a time. As the parser encounters interesting events (such as a start tag, end tag, attribute, etc.), the parser executes callback functions which are registered by the calling application. This allows the calling application to perform application-specific operations based on XML parsing events.
+saxml is a truly small event-driven XML parser designed for use in embedded/microcontroller applications.
 
-See the test subdirectory for a simple example application. saxml.h includes a detailed description of the API.
+Since saxml is a SAX XML parser (see https://en.wikipedia.org/wiki/Simple_API_for_XML), the parser has a very small memory footprint (there's no XML document stored on the heap). Instead, the XML document is streamed to the parser a single character at a time. As the parser encounters interesting events (such as a start tag, end tag, attribute, etc.), the parser executes callback functions which are registered by the calling application. This allows the calling application to perform application-specific operations based on XML parsing events.
+
+The parse depth and heirarchy can easily be maintained by an application through the use of a stack; push the tag name on the stack each time a tagHandler event is handled and pop the top element off the stack each time a tagEndHandler event is handled.
+
+See the test subdirectory for a simple example application. `saxml.h` includes a detailed description of the API.
 
 saxml performs no validation of the XML document
 
-## Example #1 (test.xml)
+### Example #1 (test.xml)
 
 XML Document: 
-```
+```xml
 <begin  > 
 <second_begin>
 <nothing_much/>
@@ -32,10 +36,10 @@ tagEndHandler: 'begin'
 
 ```
 
-## Example #2 (test2.xml)
+### Example #2 (test2.xml)
 
 XML Document: 
-```
+```xml
 <begin  > 
 <second_begin yes no="hello">
 <nothing_much/>content</second_begin>
@@ -58,10 +62,10 @@ contentHandler: 'more content goes here
 tagEndHandler: 'begin'
 ```
 
-## Example #3 (test3.xml)
+### Example #3 (test3.xml)
 
 XML Document: 
-```
+```xml
 <begin  > 
    <second_begin yes no="hello">
       <nothing_much attribute_in_small_tag />

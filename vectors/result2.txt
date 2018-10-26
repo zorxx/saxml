@@ -1,0 +1,11 @@
+tagHandler: 'begin'
+tagHandler: 'second_begin'
+attributeHandler: 'yes'
+attributeHandler: 'no="hello"'
+tagHandler: 'nothing_much'
+tagEndHandler: 'nothing_much'
+contentHandler: 'content'
+tagEndHandler: 'second_begin'
+contentHandler: 'more content goes here
+'
+tagEndHandler: 'begin'

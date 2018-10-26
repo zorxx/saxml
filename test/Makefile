@@ -1,4 +1,4 @@
-# \copyright 2017 Zorxx Software. All rights reserved.
+# \copyright 2017-2018 Zorxx Software. All rights reserved.
 # \license This file is released under the MIT License. See the LICENSE file for details.
 # \brief Embedded XML Parser
 APP = saxml
@@ -33,4 +33,4 @@ $(APP): $(patsubst %.c,%.o,$(SRC))
 clean:
 	@echo "Cleaning ${APP}"
 	@rm -f *.o $(APP).map $(APP)
-
+.PHONY: clean

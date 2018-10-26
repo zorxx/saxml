@@ -1,0 +1,8 @@
+tagHandler: 'begin'
+tagHandler: 'second_begin'
+tagHandler: 'nothing_much'
+tagEndHandler: 'nothing_much'
+contentHandler: 'content
+'
+tagEndHandler: 'second_begin'
+tagEndHandler: 'begin'
