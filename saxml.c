@@ -80,7 +80,7 @@ tSaxmlParser saxml_Initialize(tSaxmlContext *context, const uint32_t maxStringSi
     ctxt = &g_saxmlParserContext;
     ctxt->buffer = g_saxmlBuffer;
     #else
-    ctxt = (tParserContext *) malloc(sizeof(*context));
+    ctxt = (tParserContext *) malloc(sizeof(*ctxt));
     if(NULL == ctxt)
         return NULL;
 
