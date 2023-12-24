@@ -6,10 +6,11 @@ if(IDF_TARGET)
    return()
 endif()
 
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.1)
 set(project saxml)
 project(${project} LANGUAGES C VERSION 1.0.0)
-set(CMAKE_C_STANDARD 99)
+
+include(CTest)
 
 add_library(${project} SHARED saxml.c)
 set_target_properties(${project} PROPERTIES PUBLIC_HEADER "saxml.h")
@@ -19,4 +20,3 @@ install(TARGETS ${project}
         PUBLIC_HEADER DESTINATION include/saxml) 
 
 add_subdirectory(test)
-
