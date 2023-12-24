@@ -1,4 +1,11 @@
 # Copyright 2023 Zorxx Software. All rights reserved.
+
+# esp-idf component
+if(IDF_TARGET)
+   idf_component_register(SRCS "saxml.c" INCLUDE_DIRS ".")
+   return()
+endif()
+
 cmake_minimum_required(VERSION 3.0)
 set(project saxml)
 project(${project} LANGUAGES C VERSION 1.0.0)
@@ -12,3 +19,4 @@ install(TARGETS ${project}
         PUBLIC_HEADER DESTINATION include/saxml) 
 
 add_subdirectory(test)
+

@@ -43,6 +43,12 @@ static void state_Attribute(void *context, const char character);
     #define DBG(...)
 #endif
 
+#if __has_attribute(__fallthrough__)
+    #define fallthrough  __attribute__((__fallthrough__))
+#else
+    #define fallthrough  do {} while (0)  /* fallthrough */
+#endif
+
 #define ChangeState(ctxt, state) \
     (ctxt)->pfnHandler = state;  \
     (ctxt)->bInitialize = 1;
@@ -284,7 +290,7 @@ static void state_TagContents(void *context, const char character)
                 break; /* Ignore leading whitespace */
             else
             {
-                /* FALLTHRU */
+                fallthrough;
             }
         default:
             ContextBufferAddChar(ctxt, character);
