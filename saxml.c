@@ -327,6 +327,15 @@ static void state_Attribute(void *context, const char character)
                 nextState = state_Attribute;
             break;
         case '/':
+	    /* Handle the case where an attribute is included in an empty tag,
+	       and the attribute name/value has no trailing whitespace
+	       prior to the empty tag terminator. */
+            if (ctxt->length > 0)
+	    {
+                CallHandler(ctxt, attributeHandler);
+                ctxt->length = 0;
+            }
+
             /* We've found an empty tag that contains at least one attribute.
                Since the buffer containing the tag name is long-gone (the attribute
                is now in the parser's string buffer), we don't have a way to get it
