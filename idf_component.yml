@@ -1,4 +1,10 @@
-version: "1.0.0"
+version: "1.0.1"
 description: "Tiny event-driven XML parser"
 url: "https://github.com/zorxx/saxml"
+repository: "https://github.com/zorxx/saxml.git"
 license: "MIT"
+tags:
+  - xml
+  - parser
+  - event
+  - expat
