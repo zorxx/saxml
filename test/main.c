@@ -108,12 +108,13 @@ int main(int argc, char *argv[])
         saxml_HandleCharacter(saxml, (const uint8_t) fgetc(xml));
     fclose(xml);
 
+    int ret = 1;
     if(compareBuffer != NULL)
     {
         if(strcmp(compareBuffer, resultBuffer) == 0)
         {
             printf("Success\n");
-            return 0;
+	    ret = 0;
         }
         else
         {
@@ -124,5 +125,5 @@ int main(int argc, char *argv[])
         free(compareBuffer);
     }
 
-    return 0;
+    return ret;
 }

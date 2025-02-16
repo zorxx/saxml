@@ -20,7 +20,8 @@ typedef struct
 
     pfnParserStateHandler pfnHandler;
 
-    int bInitialize; /* true for first call into a state */
+    unsigned int bInitialize:1; /* true for first call into a state */
+    unsigned int bInQuotedText:1; /* true if we're within quotes */
 
     char *buffer;
     uint32_t maxStringSize;
@@ -41,12 +42,6 @@ static void state_Attribute(void *context, const char character);
 
 #if !defined(DBG)
     #define DBG(...)
-#endif
-
-#if __has_attribute(__fallthrough__)
-    #define fallthrough  __attribute__((__fallthrough__))
-#else
-    #define fallthrough  do {} while (0)  /* fallthrough */
 #endif
 
 #define ChangeState(ctxt, state) \
@@ -278,20 +273,25 @@ static void state_TagContents(void *context, const char character)
         DBG("%s: Initialize\n", __func__);
         ctxt->length = 0;
         ctxt->bInitialize = 0;
+	ctxt->bInQuotedText = 0;
     }
 
     switch(character)
     {
         case '<':
-            nextState = state_StartTag;
+	    if(0 == ctxt->bInQuotedText)
+                nextState = state_StartTag;
+	    else
+		ContextBufferAddChar(ctxt, character);
+	    break;
+        case '"':
+            ctxt->bInQuotedText ^= 1;
+            ContextBufferAddChar(ctxt, character);
             break;
         case ' ': case '\r': case '\n': case '\t':
-            if(0 == ctxt->length)
+	    if(0 == ctxt->bInQuotedText && 0 == ctxt->length)
                 break; /* Ignore leading whitespace */
-            else
-            {
-                fallthrough;
-            }
+	    /* fall through */
         default:
             ContextBufferAddChar(ctxt, character);
             break;
@@ -316,38 +316,52 @@ static void state_Attribute(void *context, const char character)
         DBG("%s: Initialize\n", __func__);
         ctxt->length = 0;
         ctxt->bInitialize = 0;
+	ctxt->bInQuotedText = 0;
     }
 
     switch(character)
     {
         case ' ': case '\r': case '\n': case '\t':
-            if(0 == ctxt->length)
-                break;
-            else
-                nextState = state_Attribute;
-            break;
-        case '/':
-	    /* Handle the case where an attribute is included in an empty tag,
-	       and the attribute name/value has no trailing whitespace
-	       prior to the empty tag terminator. */
-            if (ctxt->length > 0)
+	    if(0 == ctxt->bInQuotedText)
 	    {
-                CallHandler(ctxt, attributeHandler);
-                ctxt->length = 0;
-            }
+                if(0 != ctxt->length)
+                    nextState = state_Attribute;
+	    }
+	    else
+		ContextBufferAddChar(ctxt, character);
+	    break;
+        case '/':
+	    if(0 == ctxt->bInQuotedText)
+	    {
+    	    /* Handle the case where an attribute is included in an empty tag,
+    	       and the attribute name/value has no trailing whitespace
+    	       prior to the empty tag terminator. */
+                if (ctxt->length > 0)
+                {
+                    CallHandler(ctxt, attributeHandler);
+                    ctxt->length = 0;
+                }
 
-            /* We've found an empty tag that contains at least one attribute.
-               Since the buffer containing the tag name is long-gone (the attribute
-               is now in the parser's string buffer), we don't have a way to get it
-               back. In order to generate a "tagEnd" event, store a dummy string
-               containing a single space character (which isn't a valid tag name),
-               which will be provided to the tagEndHandler callback. */
-            ContextBufferAddChar(ctxt, ' ');
-            nextState = state_EmptyTag;
+                /* We've found an empty tag that contains at least one attribute.
+                   Since the buffer containing the tag name is long-gone (the attribute
+                   is now in the parser's string buffer), we don't have a way to get it
+                   back. In order to generate a "tagEnd" event, store a dummy string
+                   containing a single space character (which isn't a valid tag name),
+                   which will be provided to the tagEndHandler callback. */
+                ContextBufferAddChar(ctxt, ' ');
+                nextState = state_EmptyTag;
+	    }
+	    else
+	        ContextBufferAddChar(ctxt, character);
             break;
         case '>':
-            nextState = state_TagContents; /* Done with tag, contents may follow */
+	    if(0 == ctxt->bInQuotedText)
+                nextState = state_TagContents; /* Done with tag, contents may follow */
+	    else
+		ContextBufferAddChar(ctxt, character);
             break;
+	case '"':
+            ctxt->bInQuotedText ^= 1;
         default:
             ContextBufferAddChar(ctxt, character);
             break;
