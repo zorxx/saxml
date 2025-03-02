@@ -1,4 +1,6 @@
-# Copyright 2023 Zorxx Software. All rights reserved.
+# Copyright 2023-2025 Zorxx Software. All rights reserved.
+include(CTest)
+
 set(testapp saxml_test)
 add_executable(${testapp} main.c)
 target_link_libraries(${testapp} saxml)

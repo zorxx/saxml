@@ -1,14 +1,16 @@
-/* \copyright 2017-2018 Zorxx Software. All rights reserved.
+/* \copyright 2017-2025 Zorxx Software. All rights reserved.
  * \license This file is released under the MIT License. See the LICENSE file for details.
  * \brief Embedded XML Parser
  */
+#include "saxml/saxml.h"
 #include <stdio.h>
 #include <stdint.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
-#include "saxml.h"
+
+#define UNUSED(x) (void)x;
 
 static char *resultBuffer = NULL;
 static uint32_t resultLength = 0;
@@ -26,30 +28,43 @@ static void print_buffer(const char *event, const char *param)
 }
 static pfnPrintHandler PRINT = print_console;
 
+/* -----------------------------------------------------------------------------------------------
+ * Parse Event Handlers
+ */
+
 static void HandleTag(void *cookie, const char *szString)
 {
+    UNUSED(cookie);
     PRINT("tagHandler", szString);
 }
 
 static void HandleTagEnd(void *cookie, const char *szString)
 {
+    UNUSED(cookie);
     PRINT("tagEndHandler", szString);
 }
 
 static void HandleParameter(void *cookie, const char *szString)
 {
+    UNUSED(cookie);
     PRINT("parameterHandler", szString);
 }
 
 static void HandleContent(void *cookie, const char *szString)
 {
+    UNUSED(cookie);
     PRINT("contentHandler", szString);
 }
 
 static void HandleAttribute(void *cookie, const char *szString)
 {
+    UNUSED(cookie);
     PRINT("attributeHandler", szString);
 }
+
+/* -----------------------------------------------------------------------------------------------
+ * main
+ */
 
 int main(int argc, char *argv[])
 {
@@ -58,6 +73,8 @@ int main(int argc, char *argv[])
     FILE *xml;
     void *saxml;
     tSaxmlContext saxml_context;
+    uint32_t max_string_size = 256;
+    int result = -1;
 
     if(argc < 2)
     {
@@ -68,6 +85,7 @@ int main(int argc, char *argv[])
 
     if(argc >= 3)
     {
+       ssize_t length;
        FILE *pFile = fopen(argv[2], "rb");
        if(NULL == pFile)
        {
@@ -75,7 +93,7 @@ int main(int argc, char *argv[])
           return -1;
        }
        fseek(pFile, 0, SEEK_END);
-       ssize_t length = ftell(pFile);
+       length = ftell(pFile);
        fseek(pFile, 0, SEEK_SET);
        compareBuffer = malloc(length+1);
        if(fread(compareBuffer, length, 1, pFile) != 1)
@@ -88,7 +106,7 @@ int main(int argc, char *argv[])
        PRINT = print_buffer;
     }
 
-    xml = fopen(filename, "r"); 
+    xml = fopen(filename, "r");
     if(NULL == xml)
     {
         fprintf(stderr, "Error opening XML file '%s' (%d, %s)\n",
@@ -102,18 +120,28 @@ int main(int argc, char *argv[])
     saxml_context.parameterHandler = HandleParameter;
     saxml_context.contentHandler = HandleContent;
     saxml_context.attributeHandler = HandleAttribute;
-    saxml = saxml_Initialize(&saxml_context, 256);
+    saxml = saxml_Initialize(&saxml_context, max_string_size);
 
     while(!feof(xml))
-        saxml_HandleCharacter(saxml, (const uint8_t) fgetc(xml));
+    {
+        /* Parse one character at a time */
+        if(saxml_HandleCharacter(saxml, (const uint8_t) fgetc(xml)) != 0)
+        {
+            printf("Parsing failed\n");
+            return -1;
+        }
+    }
     fclose(xml);
+    printf("Parse successful\n");
 
-    if(compareBuffer != NULL)
+    if(compareBuffer == NULL)
+       result = 0;
+    else
     {
         if(strcmp(compareBuffer, resultBuffer) == 0)
         {
             printf("Success\n");
-            return 0;
+            result = 0;
         }
         else
         {
@@ -124,5 +152,5 @@ int main(int argc, char *argv[])
         free(compareBuffer);
     }
 
-    return 0;
+    return result;
 }

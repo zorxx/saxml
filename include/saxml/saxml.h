@@ -1,6 +1,6 @@
-/* \copyright 2017 Zorxx Software. All rights reserved.
- * \license This file is released under the MIT License. See the LICENSE file for details.
- * \brief Embedded XML Parser
+/*! \copyright 2017-2025 Zorxx Software. All rights reserved.
+ *  \license This file is released under the MIT License. See the LICENSE file for details.
+ *  \brief Embedded XML Parser
  */
 #ifndef SAXML_H
 #define SAXML_H
@@ -20,6 +20,9 @@ typedef struct
 } tSaxmlContext;
 
 typedef void *tSaxmlParser;
+
+#define SAXML_ERROR_SYNTAX            -1  /* error in XML syntax */
+#define SAXML_ERROR_BUFFER_OVERFLOW   -2  /* insufficient space in parser buffer */
 
 #ifdef __cplusplus
 extern "C" {
@@ -45,8 +48,9 @@ void saxml_Deinitialize(tSaxmlParser parser);
  *         character, one of the pfnStringHandler functions may be called.
  *  \param parser tSaxmlParser instance, obtained from a call to saxml_Initialize
  *  \param character Character to process
+ *  \return 0 on successful parse, one of SAXML_ERROR_* if not
  */
-void saxml_HandleCharacter(tSaxmlParser parser, const char character);
+int saxml_HandleCharacter(tSaxmlParser parser, const char character);
 
 /*! \brief Reset the parser to its initial state
  *  \param parser tSaxmlParser instance, obtained from a call to saxml_Initialize

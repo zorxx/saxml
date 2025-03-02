@@ -1,18 +1,21 @@
-/* \copyright 2017 Zorxx Software. All rights reserved.
- * \license This file is released under the MIT License. See the LICENSE file for details.
- * \brief Embedded XML Parser
+/*! \copyright 2017-2025 Zorxx Software. All rights reserved.
+ *  \license This file is released under the MIT License. See the LICENSE file for details.
+ *  \brief Embedded XML Parser
  */
+#include "saxml/saxml.h"
+#include "helpers.h"
 #include <stddef.h> /* for NULL */
 #ifndef SAXML_NO_MALLOC
 #include <stdlib.h> /* malloc and free */
 #endif
-#include "saxml.h"
 
 #if defined(SAXML_NO_MALLOC) && !defined(SAXML_MAX_STRING_LENGTH)
 #error saxml: Must define SAXML_MAX_STRING_LENGTH
 #endif
 
-typedef void (*pfnParserStateHandler)(void *context, const char character);
+#define SAXML_MIN_STRING_SIZE   2
+
+typedef int (*pfnParserStateHandler)(void *context, const char character);
 
 typedef struct
 {
@@ -31,35 +34,30 @@ static tParserContext g_saxmlParserContext;
 static char g_saxmlBuffer[SAXML_MAX_STRING_LENGTH];
 #endif
 
-static void state_Begin(void *context, const char character);
-static void state_StartTag(void *context, const char character);
-static void state_TagName(void *context, const char character);
-static void state_TagContents(void *context, const char character);
-static void state_EndTag(void *context, const char character);
-static void state_EmptyTag(void *context, const char character);
-static void state_Attribute(void *context, const char character);
-
-#if !defined(DBG)
-    #define DBG(...)
-#endif
-
-#if __has_attribute(__fallthrough__)
-    #define fallthrough  __attribute__((__fallthrough__))
-#else
-    #define fallthrough  do {} while (0)  /* fallthrough */
-#endif
+static int state_Begin(void *context, const char character);
+static int state_StartTag(void *context, const char character);
+static int state_TagName(void *context, const char character);
+static int state_TagContents(void *context, const char character);
+static int state_EndTag(void *context, const char character);
+static int state_EmptyTag(void *context, const char character);
+static int state_Attribute(void *context, const char character);
 
 #define ChangeState(ctxt, state) \
     (ctxt)->pfnHandler = state;  \
     (ctxt)->bInitialize = 1;
 
-#define ContextBufferAddChar(ctxt, character)        \
-    if((ctxt)->length < ((ctxt)->maxStringSize) - 2) \
-    {                                                \
-        (ctxt)->buffer[(ctxt)->length] = character;  \
-        ++((ctxt)->length);                          \
-    }                                                \
-    else { /* string truncated */ }
+static __inline int ContextBufferAddChar(tParserContext *ctxt, const char character)
+{
+    if((ctxt)->length < ((ctxt)->maxStringSize) - 2)
+    {
+        (ctxt)->buffer[(ctxt)->length] = character;
+        ++((ctxt)->length);
+        return 0;
+    }
+
+    /* string truncated */
+    return SAXML_ERROR_BUFFER_OVERFLOW;
+}
 
 #define CallHandler(ctxt, handlerName)                                   \
     if(NULL != (ctxt)->user->handlerName && (ctxt)->length > 0)          \
@@ -77,7 +75,7 @@ tSaxmlParser saxml_Initialize(tSaxmlContext *context, const uint32_t maxStringSi
 {
     tParserContext *ctxt;
 
-    if(maxStringSize < 2)
+    if(maxStringSize < SAXML_MIN_STRING_SIZE)
         return NULL;
     if(NULL == context)
         return NULL;
@@ -85,6 +83,8 @@ tSaxmlParser saxml_Initialize(tSaxmlContext *context, const uint32_t maxStringSi
     #ifdef SAXML_NO_MALLOC
     ctxt = &g_saxmlParserContext;
     ctxt->buffer = g_saxmlBuffer;
+    if(NULL != ctxt->user)
+       return NULL; /* already in use */
     #else
     ctxt = (tParserContext *) malloc(sizeof(*ctxt));
     if(NULL == ctxt)
@@ -116,13 +116,15 @@ void saxml_Deinitialize(tSaxmlParser parser)
             free(ctxt->buffer);
         free(ctxt);
     }
+    #else
+    UNUSED(parser);
     #endif
 }
 
-void saxml_HandleCharacter(tSaxmlParser parser, const char character)
+int saxml_HandleCharacter(tSaxmlParser parser, const char character)
 {
     tParserContext *ctxt = (tParserContext *) parser;
-    ctxt->pfnHandler(ctxt, character);
+    return ctxt->pfnHandler(ctxt, character);
 }
 
 void saxml_Reset(tSaxmlParser parser)
@@ -136,17 +138,17 @@ void saxml_Reset(tSaxmlParser parser)
  */
 
 /* Wait for a tag start character */
-static void state_Begin(void *context, const char character)
+static int state_Begin(void *context, const char character)
 {
     tParserContext *ctxt = (tParserContext *) context;
     pfnParserStateHandler nextState = NULL;
 
-    DBG("%s: %c\n", __func__, character);
+    DBG1("[state_Begin] %c\n", character);
 
     if(ctxt->bInitialize)
     {
-        DBG("%s: Initialize\n", __func__);
-        ctxt->length = 0; 
+        DBG("[state_Begin] Initialize\n");
+        ctxt->length = 0;
         ctxt->bInitialize = 0;
     }
 
@@ -163,19 +165,21 @@ static void state_Begin(void *context, const char character)
     {
         ChangeState(ctxt, nextState);
     }
+
+    return 0;
 }
 
 /* We've already found a tag start character, determine if this is start or end tag,
  *  and parse the tag name */
-static void state_StartTag(void *context, const char character)
+static int state_StartTag(void *context, const char character)
 {
     tParserContext *ctxt = (tParserContext *) context;
 
-    DBG("%s: %c\n", __func__, character);
+    DBG1("[state_StartTag] %c\n", character);
 
     if(ctxt->bInitialize)
     {
-        DBG("%s: Initialize\n", __func__);
+        DBG("[state_StartTag] Initialize\n");
         ctxt->bInitialize = 0;
     }
 
@@ -183,7 +187,7 @@ static void state_StartTag(void *context, const char character)
     {
         case '<': case '>':
             /* Syntax error! */
-            break;
+            return SAXML_ERROR_SYNTAX;
         case ' ': case '\r': case '\n': case '\t':
             /* Ignore whitespace */
             break;
@@ -196,19 +200,21 @@ static void state_StartTag(void *context, const char character)
             ChangeState(ctxt, state_TagName);
             break;
     }
+
+    return 0;
 }
 
-static void state_TagName(void *context, const char character)
+static int state_TagName(void *context, const char character)
 {
     tParserContext *ctxt = (tParserContext *) context;
     pfnParserStateHandler nextState = NULL;
 
-    DBG("%s: %c\n", __func__, character);
+    DBG1("[state_TagName] %c\n", character);
 
     if(ctxt->bInitialize)
     {
         /* Expect one character in the buffer; the start of the tag name from the previous state*/
-        DBG("%s: Initialize\n", __func__);
+        DBG("[state_TagName] Initialize\n");
         ctxt->bInitialize = 0;
     }
 
@@ -224,8 +230,9 @@ static void state_TagName(void *context, const char character)
         case '>':
             nextState = state_TagContents; /* Done with tag, contents may follow */
             break;
-        default: 
-            ContextBufferAddChar(ctxt, character);
+        default:
+            if(ContextBufferAddChar(ctxt, character) != 0)
+               return SAXML_ERROR_BUFFER_OVERFLOW;
             break;
     }
 
@@ -234,19 +241,21 @@ static void state_TagName(void *context, const char character)
         CallHandler(ctxt, tagHandler);
         ChangeState(ctxt, nextState);
     }
+
+    return 0;
 }
 
-static void state_EmptyTag(void *context, const char character)
+static int state_EmptyTag(void *context, const char character)
 {
     tParserContext *ctxt = (tParserContext *) context;
     pfnParserStateHandler nextState = NULL;
 
-    DBG("%s: %c\n", __func__, character);
+    DBG1("[state_EmptyTag] %c\n", character);
 
     if(ctxt->bInitialize)
     {
         /* We need to keep the buffer as-is, since it contains the tag name */
-        DBG("%s: Initialize\n", __func__);
+        DBG("[state_EmptyTag] Initialize\n");
         ctxt->bInitialize = 0;
     }
 
@@ -264,18 +273,20 @@ static void state_EmptyTag(void *context, const char character)
         CallHandler(ctxt, tagEndHandler);
         ChangeState(ctxt, nextState);
     }
+
+    return 0;
 }
 
-static void state_TagContents(void *context, const char character)
+static int state_TagContents(void *context, const char character)
 {
     tParserContext *ctxt = (tParserContext *) context;
     pfnParserStateHandler nextState = NULL;
 
-    DBG("%s: %c\n", __func__, character);
+    DBG1("[state_TagContents] %c\n", character);
 
     if(ctxt->bInitialize)
     {
-        DBG("%s: Initialize\n", __func__);
+        DBG("[state_TagContents] Initialize\n");
         ctxt->length = 0;
         ctxt->bInitialize = 0;
     }
@@ -288,12 +299,12 @@ static void state_TagContents(void *context, const char character)
         case ' ': case '\r': case '\n': case '\t':
             if(0 == ctxt->length)
                 break; /* Ignore leading whitespace */
-            else
-            {
-                fallthrough;
-            }
+            if(ContextBufferAddChar(ctxt, character) != 0)
+               return SAXML_ERROR_BUFFER_OVERFLOW;
+            break;
         default:
-            ContextBufferAddChar(ctxt, character);
+            if(ContextBufferAddChar(ctxt, character) != 0)
+               return SAXML_ERROR_BUFFER_OVERFLOW;
             break;
     }
 
@@ -302,18 +313,20 @@ static void state_TagContents(void *context, const char character)
         CallHandler(ctxt, contentHandler);
         ChangeState(ctxt, nextState);
     }
+
+    return 0;
 }
 
-static void state_Attribute(void *context, const char character)
+static int state_Attribute(void *context, const char character)
 {
     tParserContext *ctxt = (tParserContext *) context;
     pfnParserStateHandler nextState = NULL;
 
-    DBG("%s: %c\n", __func__, character);
+    DBG1("[state_Attribute] %c\n", character);
 
     if(ctxt->bInitialize)
     {
-        DBG("%s: Initialize\n", __func__);
+        DBG("[state_Attribute] Initialize\n");
         ctxt->length = 0;
         ctxt->bInitialize = 0;
     }
@@ -327,11 +340,11 @@ static void state_Attribute(void *context, const char character)
                 nextState = state_Attribute;
             break;
         case '/':
-	    /* Handle the case where an attribute is included in an empty tag,
-	       and the attribute name/value has no trailing whitespace
-	       prior to the empty tag terminator. */
+           /* Handle the case where an attribute is included in an empty tag,
+              and the attribute name/value has no trailing whitespace
+              prior to the empty tag terminator. */
             if (ctxt->length > 0)
-	    {
+            {
                 CallHandler(ctxt, attributeHandler);
                 ctxt->length = 0;
             }
@@ -342,14 +355,16 @@ static void state_Attribute(void *context, const char character)
                back. In order to generate a "tagEnd" event, store a dummy string
                containing a single space character (which isn't a valid tag name),
                which will be provided to the tagEndHandler callback. */
-            ContextBufferAddChar(ctxt, ' ');
+            if(ContextBufferAddChar(ctxt, ' ') != 0)
+               return SAXML_ERROR_BUFFER_OVERFLOW;
             nextState = state_EmptyTag;
             break;
         case '>':
             nextState = state_TagContents; /* Done with tag, contents may follow */
             break;
         default:
-            ContextBufferAddChar(ctxt, character);
+            if(ContextBufferAddChar(ctxt, character) != 0)
+               return SAXML_ERROR_BUFFER_OVERFLOW;
             break;
     }
 
@@ -361,27 +376,28 @@ static void state_Attribute(void *context, const char character)
         }
         ChangeState(ctxt, nextState);
     }
+
+    return 0;
 }
 
-static void state_EndTag(void *context, const char character)
+static int state_EndTag(void *context, const char character)
 {
     tParserContext *ctxt = (tParserContext *) context;
     pfnParserStateHandler nextState = NULL;
 
-    DBG("%s: %c\n", __func__, character);
+    DBG1("[state_EndTag] %c\n", character);
 
     if(ctxt->bInitialize)
     {
-        DBG("%s: Initialize\n", __func__);
+        DBG("[state_EndTag] Initialize\n");
         ctxt->length = 0;
         ctxt->bInitialize = 0;
     }
 
     switch(character)
     {
-        case '<':
-            /* Syntax error! */
-            break;
+        case '<': /* syntax error */
+            return SAXML_ERROR_SYNTAX;
         case ' ': case '\r': case '\n': case '\t':
             /* Ignore whitespace */
             break;
@@ -389,7 +405,8 @@ static void state_EndTag(void *context, const char character)
             nextState = state_TagContents;
             break;
         default:
-            ContextBufferAddChar(ctxt, character);
+            if(ContextBufferAddChar(ctxt, character) != 0)
+               return SAXML_ERROR_BUFFER_OVERFLOW;
             break;
     }
 
@@ -398,4 +415,6 @@ static void state_EndTag(void *context, const char character)
         CallHandler(ctxt, tagEndHandler);
         ChangeState(ctxt, nextState);
     }
+
+    return 0;
 }
