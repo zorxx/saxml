@@ -58,6 +58,7 @@ int main(int argc, char *argv[])
     FILE *xml;
     void *saxml;
     tSaxmlContext saxml_context;
+    int ret = 1;
 
     if(argc < 2)
     {
@@ -113,7 +114,7 @@ int main(int argc, char *argv[])
         if(strcmp(compareBuffer, resultBuffer) == 0)
         {
             printf("Success\n");
-            return 0;
+	    ret = 0;
         }
         else
         {
@@ -124,5 +125,5 @@ int main(int argc, char *argv[])
         free(compareBuffer);
     }
 
-    return 0;
+    return ret;
 }

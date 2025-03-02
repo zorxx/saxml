@@ -13,6 +13,7 @@ project(${project} LANGUAGES C VERSION 1.0.0)
 include(CTest)
 
 add_library(${project} SHARED saxml.c)
+set_target_properties(${project} PROPERTIES C_STANDARD 99)
 set_target_properties(${project} PROPERTIES PUBLIC_HEADER "saxml.h")
 target_include_directories(${project} INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
 install(TARGETS ${project}
