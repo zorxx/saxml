@@ -58,6 +58,7 @@ int main(int argc, char *argv[])
     FILE *xml;
     void *saxml;
     tSaxmlContext saxml_context;
+    int ret = 1;
 
     if(argc < 2)
     {
@@ -108,7 +109,6 @@ int main(int argc, char *argv[])
         saxml_HandleCharacter(saxml, (const uint8_t) fgetc(xml));
     fclose(xml);
 
-    int ret = 1;
     if(compareBuffer != NULL)
     {
         if(strcmp(compareBuffer, resultBuffer) == 0)

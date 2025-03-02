@@ -20,8 +20,8 @@ typedef struct
 
     pfnParserStateHandler pfnHandler;
 
-    unsigned int bInitialize:1; /* true for first call into a state */
-    unsigned int bInQuotedText:1; /* true if we're within quotes */
+    int bInitialize; /* true for first call into a state */
+    int bInQuotedText; /* true if we're within quotes */
 
     char *buffer;
     uint32_t maxStringSize;
@@ -289,9 +289,10 @@ static void state_TagContents(void *context, const char character)
             ContextBufferAddChar(ctxt, character);
             break;
         case ' ': case '\r': case '\n': case '\t':
-	    if(0 == ctxt->bInQuotedText && 0 == ctxt->length)
+            if(0 == ctxt->bInQuotedText && 0 == ctxt->length)
                 break; /* Ignore leading whitespace */
-	    /* fall through */
+            ContextBufferAddChar(ctxt, character);
+            break;
         default:
             ContextBufferAddChar(ctxt, character);
             break;
@@ -362,6 +363,8 @@ static void state_Attribute(void *context, const char character)
             break;
 	case '"':
             ctxt->bInQuotedText ^= 1;
+            ContextBufferAddChar(ctxt, character);
+            break;
         default:
             ContextBufferAddChar(ctxt, character);
             break;

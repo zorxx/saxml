@@ -2,6 +2,7 @@
    <second_begin yes no="hello">
       <nothing_much attribute_in_small_tag />
       <nothing_much2 attribute_in_small_tag2="none"/>
+      <nothing_much3 attribute_in_small_tag3="attribute/with\slashes"/>
       <another_begin>
       </another_begin>
    </second_begin>
