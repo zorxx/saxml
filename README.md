@@ -1,7 +1,7 @@
 # saxml
 Embedded XML Parser
 
-[![Build Status](https://travis-ci.org/zorxx/saxml.svg?branch=master)](https://travis-ci.org/zorxx/saxml)
+![Build Status](https://github.com/zorxx/saxml/actions/workflows/cmake.yml/badge.svg)
 
 saxml is a truly small event-driven XML parser designed for use in embedded/microcontroller applications.
 
@@ -9,15 +9,15 @@ Since saxml is a SAX XML parser (see https://en.wikipedia.org/wiki/Simple_API_fo
 
 The parse depth and heirarchy can easily be maintained by an application through the use of a stack; push the tag name on the stack each time a tagHandler event is handled and pop the top element off the stack each time a tagEndHandler event is handled.
 
-See the test subdirectory for a simple example application. `saxml.h` includes a detailed description of the API.
+See the test subdirectory for a simple example application. `include/saxml/saxml.h` includes a detailed description of the API.
 
 saxml performs no validation of the XML document
 
 ### Example #1 (test.xml)
 
-XML Document: 
+XML Document:
 ```xml
-<begin  > 
+<begin  >
 <second_begin>
 <nothing_much/>
  content
@@ -40,9 +40,9 @@ tagEndHandler: 'begin'
 
 ### Example #2 (test2.xml)
 
-XML Document: 
+XML Document:
 ```xml
-<begin  > 
+<begin  >
 <second_begin yes no="hello">
 <nothing_much/>content</second_begin>
 more content goes here
@@ -66,9 +66,9 @@ tagEndHandler: 'begin'
 
 ### Example #3 (test3.xml)
 
-XML Document: 
+XML Document:
 ```xml
-<begin  > 
+<begin  >
    <second_begin yes no="hello">
       <nothing_much attribute_in_small_tag />
       <another_begin>
