@@ -57,6 +57,13 @@ int saxml_HandleCharacter(tSaxmlParser parser, const char character);
  */
 void saxml_Reset(tSaxmlParser parser);
 
+/*! \brief Allow parsing to continue on parsed string buffer overflow
+ *  \param parser tSaxmlParser instance, obtained from a call to saxml_Initialize
+ *  \param allow Nonzero to continue parsing in the event that the parser string buffer
+ *               overflows (length specified by maxStringSize in saxml_Initialize)7
+ */
+void saxml_AllowTruncatedStrings(tSaxmlParser parser, const int allow);
+
 #ifdef __cplusplus
 };
 #endif

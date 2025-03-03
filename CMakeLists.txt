@@ -29,7 +29,7 @@ enable_c_compiler_flag_if_supported("-pedantic")
 
 include_directories(include)
 
-add_library(${project} STATIC ${SAXML_SRC})
+add_library(${project} SHARED ${SAXML_SRC})
 set_target_properties(${project} PROPERTIES PUBLIC_HEADER "saxml/saxml.h")
 if(SAXML_NO_MALLOC)
    target_compile_definitions(${project} PRIVATE "SAXML_NO_MALLOC")

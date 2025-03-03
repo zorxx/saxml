@@ -24,6 +24,8 @@ typedef struct
     pfnParserStateHandler pfnHandler;
 
     int bInitialize; /* true for first call into a state */
+    int bInQuotedText; /* true if we're within quotes */
+    int bAllowTruncatedStrings; /* true if truncated parsing results are acceptable */
 
     char *buffer;
     uint32_t maxStringSize;
@@ -56,7 +58,10 @@ static __inline int ContextBufferAddChar(tParserContext *ctxt, const char charac
     }
 
     /* string truncated */
-    return SAXML_ERROR_BUFFER_OVERFLOW;
+    if(ctxt->bAllowTruncatedStrings)
+        return 0;
+    else
+        return SAXML_ERROR_BUFFER_OVERFLOW;
 }
 
 #define CallHandler(ctxt, handlerName)                                   \
@@ -101,6 +106,7 @@ tSaxmlParser saxml_Initialize(tSaxmlContext *context, const uint32_t maxStringSi
     ctxt->user = context;
     ctxt->length = 0;
     ctxt->maxStringSize = maxStringSize;
+    ctxt->bAllowTruncatedStrings = 0;
     ChangeState(ctxt, state_Begin);
 
     return (tSaxmlParser) ctxt;
@@ -131,6 +137,12 @@ void saxml_Reset(tSaxmlParser parser)
 {
     tParserContext *ctxt = (tParserContext *) parser;
     ChangeState(ctxt, state_Begin);
+}
+
+void saxml_AllowTruncatedStrings(tSaxmlParser parser, const int allow)
+{
+    tParserContext *ctxt = (tParserContext *) parser;
+    ctxt->bAllowTruncatedStrings = (allow) ? 1 : 0;
 }
 
 /* ---------------------------------------------------------------------------------------------
@@ -289,15 +301,27 @@ static int state_TagContents(void *context, const char character)
         DBG("[state_TagContents] Initialize\n");
         ctxt->length = 0;
         ctxt->bInitialize = 0;
+        ctxt->bInQuotedText = 0;
     }
 
     switch(character)
     {
         case '<':
-            nextState = state_StartTag;
+            if(0 == ctxt->bInQuotedText)
+                nextState = state_StartTag;
+            else
+            {
+                if(ContextBufferAddChar(ctxt, character) != 0)
+                    return SAXML_ERROR_BUFFER_OVERFLOW;
+            }
+            break;
+        case '"':
+            ctxt->bInQuotedText ^= 1;
+            if(ContextBufferAddChar(ctxt, character) != 0)
+                return SAXML_ERROR_BUFFER_OVERFLOW;
             break;
         case ' ': case '\r': case '\n': case '\t':
-            if(0 == ctxt->length)
+            if(0 == ctxt->bInQuotedText && 0 == ctxt->length)
                 break; /* Ignore leading whitespace */
             if(ContextBufferAddChar(ctxt, character) != 0)
                return SAXML_ERROR_BUFFER_OVERFLOW;
@@ -329,38 +353,63 @@ static int state_Attribute(void *context, const char character)
         DBG("[state_Attribute] Initialize\n");
         ctxt->length = 0;
         ctxt->bInitialize = 0;
+        ctxt->bInQuotedText = 0;
     }
 
     switch(character)
     {
         case ' ': case '\r': case '\n': case '\t':
-            if(0 == ctxt->length)
-                break;
+            if(0 == ctxt->bInQuotedText)
+            {
+                if(0 != ctxt->length)
+                    nextState = state_Attribute;
+            }
             else
-                nextState = state_Attribute;
+            {
+                if(ContextBufferAddChar(ctxt, character) != 0)
+                    return SAXML_ERROR_BUFFER_OVERFLOW;
+            }
             break;
         case '/':
-           /* Handle the case where an attribute is included in an empty tag,
-              and the attribute name/value has no trailing whitespace
-              prior to the empty tag terminator. */
-            if (ctxt->length > 0)
+            if(0 == ctxt->bInQuotedText)
             {
-                CallHandler(ctxt, attributeHandler);
-                ctxt->length = 0;
-            }
+                /* Handle the case where an attribute is included in an empty tag,
+                   and the attribute name/value has no trailing whitespace
+                   prior to the empty tag terminator. */
+                if (ctxt->length > 0)
+                {
+                    CallHandler(ctxt, attributeHandler);
+                    ctxt->length = 0;
+                }
 
-            /* We've found an empty tag that contains at least one attribute.
-               Since the buffer containing the tag name is long-gone (the attribute
-               is now in the parser's string buffer), we don't have a way to get it
-               back. In order to generate a "tagEnd" event, store a dummy string
-               containing a single space character (which isn't a valid tag name),
-               which will be provided to the tagEndHandler callback. */
-            if(ContextBufferAddChar(ctxt, ' ') != 0)
-               return SAXML_ERROR_BUFFER_OVERFLOW;
-            nextState = state_EmptyTag;
+                /* We've found an empty tag that contains at least one attribute.
+                   Since the buffer containing the tag name is long-gone (the attribute
+                   is now in the parser's string buffer), we don't have a way to get it
+                   back. In order to generate a "tagEnd" event, store a dummy string
+                   containing a single space character (which isn't a valid tag name),
+                   which will be provided to the tagEndHandler callback. */
+                if(ContextBufferAddChar(ctxt, ' ') != 0)
+                    return SAXML_ERROR_BUFFER_OVERFLOW;
+                nextState = state_EmptyTag;
+            }
+            else
+            {
+                if(ContextBufferAddChar(ctxt, character) != 0)
+                    return SAXML_ERROR_BUFFER_OVERFLOW;
+            }
             break;
         case '>':
-            nextState = state_TagContents; /* Done with tag, contents may follow */
+            if(0 == ctxt->bInQuotedText)
+                nextState = state_TagContents; /* Done with tag, contents may follow */
+            else
+            {
+                if(ContextBufferAddChar(ctxt, character) != 0)
+                    return SAXML_ERROR_BUFFER_OVERFLOW;
+            }
+            break;
+        case '"':
+            ctxt->bInQuotedText ^= 1;
+            ContextBufferAddChar(ctxt, character);
             break;
         default:
             if(ContextBufferAddChar(ctxt, character) != 0)
