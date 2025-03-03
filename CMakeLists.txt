@@ -14,6 +14,8 @@ project(${project} LANGUAGES C VERSION 2.0.0)
 set(CMAKE_C_STANDARD 90)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
+include(CTest)
+
 option(SAXML_NO_MALLOC "Disable support for dynamic memory allocation" OFF)
 option(SAXML_DEBUG     "Enable runtime debug messages" OFF)
 
@@ -28,6 +30,8 @@ enable_c_compiler_flag_if_supported("-Wimplicit-fallthrough")
 enable_c_compiler_flag_if_supported("-pedantic")
 
 include_directories(include)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
 add_library(${project} SHARED ${SAXML_SRC})
 set_target_properties(${project} PROPERTIES PUBLIC_HEADER "saxml/saxml.h")
