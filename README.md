@@ -1,7 +1,7 @@
 # saxml
 Embedded XML Parser
 
-![Build Status](https://github.com/zorxx/saxml/workflows/cmake.yml/badge.svg)
+![Build Status](https://github.com/zorxx/saxml/actions/workflows/cmake.yml/badge.svg)
 
 saxml is a truly small event-driven XML parser designed for use in embedded/microcontroller applications.
 
