@@ -15,12 +15,11 @@ saxml performs no validation of the XML document
 
 ### PlatformIO
 
-Add to the following line to your project's platformio.ini file:
-
-lib_deps = https://github.com/zorxx/saxml
+Add to the following line to your project's platformio.ini file: ``` lib_deps = https://github.com/zorxx/saxml ```.
+PlatformIO will automatically download the code and set the include path when building. The library can be used by adding ```#include "saxml/saxml.h"``` in the source files.
 
 Example platformio.ini file:
-
+```
 [env]
 platform = espressif32
 framework = espidf
@@ -34,7 +33,7 @@ board = nodemcu-32s
 board_build.filesystem = littlefs
 board_build.partitions = min_littlefs.csv
 lib_deps = ${common.lib_deps}
-
+```
 
 ### Example #1 (test.xml)
 
