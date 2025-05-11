@@ -13,6 +13,29 @@ See the test subdirectory for a simple example application. `include/saxml/saxml
 
 saxml performs no validation of the XML document
 
+### PlatformIO
+
+Add to the following line to your project's platformio.ini file:
+
+lib_deps = https://github.com/zorxx/saxml
+
+Example platformio.ini file:
+
+[env]
+platform = espressif32
+framework = espidf
+monitor_speed = 115200
+
+[common]
+lib_deps = https://github.com/zorxx/saxml
+
+[env:nodemcu-32s]
+board = nodemcu-32s
+board_build.filesystem = littlefs
+board_build.partitions = min_littlefs.csv
+lib_deps = ${common.lib_deps}
+
+
 ### Example #1 (test.xml)
 
 XML Document:
